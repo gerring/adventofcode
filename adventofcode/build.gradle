@@ -1,0 +1,230 @@
+plugins {
+    id 'maven'
+	id 'maven-publish'
+	id 'signing'
+	id 'java-library'
+}
+
+apply plugin: 'java'
+apply plugin: 'jacoco'
+apply plugin: 'eclipse'
+apply plugin: 'idea'
+apply plugin: 'checkstyle'
+
+group 'adventofcode'
+description = 'Fun Times!'
+
+// To sign, enter the gradle command 'gradle(w) sign'
+defaultTasks 'compileJava', 'enunciate', 'check', 'compileTestJava', 'processTestResources', 'test', 'jar'
+
+ext {
+	baseVersion = "0.0.1"
+    if (project.hasProperty('version')) {
+		baseVersionNum = version
+    }
+
+	fullVersion = baseVersion + "-SNAPSHOT"
+    if (project.hasProperty("makeRelease")) {
+		fullVersion = baseVersion
+	}
+ 
+	// These only need to be set when publishing.
+	// If you are publising regularly then set them in gradle.properties in user home, not here.
+	sonatypeUsername = 'unset'
+	sonatypePassword = 'unset'   
+}
+
+jar {
+    baseName = 'adventofcode'
+    version = fullVersion
+
+    from("build/docs/"){
+        into("generated/docs/")
+    }
+    from("src/main/java"){
+        include("**/*.properties")
+    }
+    from(".") {
+     	include("lib/**")
+    }    
+}
+
+sourceCompatibility = 11
+targetCompatibility = 11
+
+javadoc {
+	failOnError = false
+    title = "adventofcode"
+    source = sourceSets.main.allJava
+    classpath = configurations.compile
+    include 'com/adventofcode/**'           
+    options.addStringOption('Xdoclint:none', '-quiet')
+}
+
+checkstyle {
+    toolVersion = "6.12.1"
+}
+
+tasks.withType(Checkstyle).each { checkstyleTask ->
+    checkstyleTask
+    checkstyleTask.doLast {
+        reports.all { report ->
+            def outputFile = report.destination
+
+
+            if (checkstyleTask == checkstyleMain && outputFile.exists() && outputFile.text.contains("<error ")) {
+                throw new GradleException("There were checkstyle warnings! For more info check $outputFile")
+            }
+        }
+    }
+}
+
+task sourceJar ( type: Jar, dependsOn: classes ) {
+	archiveName = "adventofcode.jar"
+    classifier = 'sources'
+	from sourceSets.main.allJava
+    from("build/docs/"){
+        into("generated/docs/")
+    }
+    from("src/main/java"){
+        include("**/*.properties")
+    }
+    from(".") {
+     	include("lib/**")
+    }    
+}
+
+task javadocJar(type: Jar, dependsOn: classes) {
+    from javadoc
+    classifier = 'javadoc'
+}
+
+artifacts {
+    archives jar
+    archives sourceJar
+    archives javadocJar
+}
+
+jacoco {
+    toolVersion = "0.8.5"
+    reportsDir = file("$buildDir/reports/coverage")
+}
+
+jacocoTestReport {
+    group = "Reporting"
+    reports {
+        xml.enabled false
+        csv.enabled false
+    }
+}
+
+tasks.withType(JacocoCoverageVerification) {
+    violationRules {
+        rule {
+            limit {
+                minimum = 0.8
+            }
+        }
+    }
+}
+check.dependsOn jacocoTestCoverageVerification
+
+
+repositories {
+    mavenCentral()
+    maven {
+        // gradle
+        url "https://plugins.gradle.org/m2/"
+    }
+}
+
+/**
+ The Suites are for local testing, gradle can file other unit tests
+ see https://docs.gradle.org/current/dsl/org.gradle.api.tasks.testing.Test.html
+ 
+ We change directory to run the tests from where junit relative paths also
+ work in eclipse.
+ 
+ **/
+test {
+	maxHeapSize = "4g"
+    testLogging.showStandardStreams = true
+    exclude '**/*Suite*'
+}
+
+
+dependencies {
+
+	// https://mvnrepository.com/artifact/org.apache.arrow/arrow-vector
+	compile group: 'org.apache.arrow', name: 'arrow-vector', version: '0.16.0'
+	
+	// https://mvnrepository.com/artifact/org.apache.arrow/arrow-memory
+	compile group: 'org.apache.arrow', name: 'arrow-memory', version: '0.16.0'
+
+    // Datasets
+    implementation 'org.eclipse.january:org.eclipse.january:2.3.0'
+    implementation 'org.eclipse.january:org.eclipse.january.asserts:2.3.0'
+    
+    // Tablesaw
+    implementation group: 'tech.tablesaw', name: 'tablesaw-core', version: '0.37.3'
+	
+	// Command Line Parsing
+	compile group: 'commons-cli', name: 'commons-cli', version: '1.4'
+	
+	// Apache commons io
+	compile group: 'commons-io', name: 'commons-io', version: '2.6'
+	
+	// https://mvnrepository.com/artifact/org.apache.commons/commons-configuration2
+	compile group: 'org.apache.commons', name: 'commons-configuration2', version: '2.6'
+	
+	// https://mvnrepository.com/artifact/org.apache.commons/commons-lang3
+	compile group: 'org.apache.commons', name: 'commons-lang3', version: '3.9'
+	
+	// https://mvnrepository.com/artifact/commons-beanutils/commons-beanutils
+    compile group: 'commons-beanutils', name: 'commons-beanutils', version: '1.9.4'
+	
+	// https://mvnrepository.com/artifact/org.apache.commons/commons-csv
+	compile group: 'org.apache.commons', name: 'commons-csv', version: '1.7'
+	
+	// https://mvnrepository.com/artifact/javax.vecmath/vecmath
+	compile group: 'javax.vecmath', name: 'vecmath', version: '1.5.2'
+	
+	// https://mvnrepository.com/artifact/tec.units/indriya/1.0  Units  BSD License
+	implementation group: 'tec.units', name: 'indriya', version: '1.0'
+	
+	// https://mvnrepository.com/artifact/si.uom/si-units
+	implementation group: 'si.uom', name: 'si-units', version: '2.0.1'
+	
+	// https://mvnrepository.com/artifact/com.github.wendykierp/JTransforms
+	implementation group: 'com.github.wendykierp', name: 'JTransforms', version: '3.0'
+	
+	// https://mvnrepository.com/artifact/gov.nist.math/jama
+    implementation group: 'gov.nist.math', name: 'jama', version: '1.0.3'
+    
+    // http://ejml.org/wiki/index.php?title=Main_Page
+    // https://mvnrepository.com/artifact/org.ejml/core
+	implementation group: 'org.ejml', name: 'core', version: '0.27'
+	
+	// http://ddogleg.org/
+	// https://mvnrepository.com/artifact/org.ddogleg/ddogleg
+	compile group: 'org.ddogleg', name: 'ddogleg', version: '0.17'
+	
+	// https://mvnrepository.com/artifact/javax.media/jai-core
+	// The license of this code was the Java distribution license.
+	compile group: 'javax.media', name: 'jai-core', version: '1.1.3'	
+		
+	// json
+    compile 'com.fasterxml.jackson.core:jackson-core:2.9.4'
+    compile 'com.fasterxml.jackson.core:jackson-annotations:2.9.4'
+    compile 'com.fasterxml.jackson.core:jackson-databind:2.9.4'
+	
+	// Logging
+	compile 'org.slf4j:slf4j-api:1.7.25'
+	compile 'ch.qos.logback:logback-core:1.2.3'
+	compile 'ch.qos.logback:logback-classic:1.2.3'
+
+	// Test
+	testCompile 'junit:junit:4.12'
+	testCompile group: 'org.hamcrest', name: 'hamcrest-library', version: '1.3'
+	
+}

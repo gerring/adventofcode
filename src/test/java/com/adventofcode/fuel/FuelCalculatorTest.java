@@ -14,8 +14,10 @@ import org.junit.Before;
 import org.junit.Test;
 
 /**
- * A simple test of FuelCalculator. We will not overengineer this 
- * because the tests are light.
+ * A simple test of FuelCalculator. We will not over-engineer this 
+ * because this stuff is just for fun but eventually there are more
+ * error cases to pin down, e.g. overflow/big numbers, very long lists of
+ * numbers, performance etc.
  * 
  * @author matt
  *

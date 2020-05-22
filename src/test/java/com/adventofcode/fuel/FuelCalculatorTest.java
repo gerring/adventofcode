@@ -178,7 +178,7 @@ public class FuelCalculatorTest {
 	}
 
 	@Test
-	public void masses_gerring() throws IOException {
+	public void masses_gerring_part1() throws IOException {
 		
 		URL url = getClass().getResource("module_masses.txt");
 		// See https://adventofcode.com/2019/day/1/input  but it is different for every user
@@ -187,6 +187,36 @@ public class FuelCalculatorTest {
 		Dataset masses = DatasetFactory.createFromObject(dmasses);
 		
 		assertEquals(3295206, calculator.calculate(masses).longValue());
+	}
+	
+	@Test
+	public void masses_recursive1() throws IOException {
+				
+		assertEquals(2, calculator.calculateRecursive(14));
+	}
+	
+	@Test
+	public void masses_recursive2() throws IOException {
+				
+		assertEquals(966, calculator.calculateRecursive(1969));
+	}
+
+	@Test
+	public void masses_recursive3() throws IOException {
+				
+		assertEquals(50346, calculator.calculateRecursive(100756));
+	}
+	
+	@Test
+	public void masses_gerring_part2() throws IOException {
+		
+		URL url = getClass().getResource("module_masses.txt");
+		// See https://adventofcode.com/2019/day/1/input  but it is different for every user
+		List<String> smasses = IOUtils.readLines(url.openStream(), "UTF-8");
+		List<Double> dmasses = smasses.stream().map(s->Double.parseDouble(s)).collect(Collectors.toList());
+		Dataset masses = DatasetFactory.createFromObject(dmasses);
+		
+		assertEquals(4939939, calculator.calculateRecursive(masses).longValue());
 	}
 
 }
